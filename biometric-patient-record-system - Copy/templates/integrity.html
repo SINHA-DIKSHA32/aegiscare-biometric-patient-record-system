@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Blockchain Layer</span>
+    <h1>Data Integrity Chain</h1>
+  </div>
+</div>
+
+<section class="panel">
+  <h2>Verification Status</h2>
+  <div class="integrity-box {{ 'ok' if chain_status.ok else 'bad' }}">
+    <strong>{{ 'Chain Verified' if chain_status.ok else 'Integrity Warning' }}</strong>
+    <p>Checked Blocks: {{ chain_status.checked_blocks }}</p>
+    {% if chain_status.issues %}
+    <ul class="simple-list">
+      {% for issue in chain_status.issues %}
+      <li>{{ issue }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No hash mismatch detected.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Recent Blocks</h2>
+  <table>
+    <thead><tr><th>Index</th><th>Time</th><th>Actor</th><th>Event</th><th>Patient ID</th><th>Hash</th><th>Prev Hash</th></tr></thead>
+    <tbody>
+      {% for block in blocks %}
+      <tr>
+        <td>{{ block.block_index }}</td>
+        <td>{{ block.created_at }}</td>
+        <td>{{ block.actor }}</td>
+        <td>{{ block.event_type }}</td>
+        <td>{{ block.patient_id or "-" }}</td>
+        <td><code>{{ block.block_hash[:20] }}...</code></td>
+        <td><code>{{ block.previous_hash[:20] }}...</code></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No blocks yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

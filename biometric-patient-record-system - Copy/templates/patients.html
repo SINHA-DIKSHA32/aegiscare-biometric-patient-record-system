@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Records</span>
+    <h1>Patients</h1>
+  </div>
+  <a class="button" href="{{ url_for('register_patient') }}">Register Patient</a>
+</div>
+
+<form class="search-row">
+  <input name="q" value="{{ search }}" placeholder="Search by name, code, or phone">
+  <button type="submit">Search</button>
+</form>
+
+<section class="panel">
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Blood</th><th>AI Risk</th><th>Created</th><th></th></tr></thead>
+    <tbody>
+      {% for patient in patients %}
+      {% set risk = risk_map.get(patient.id) %}
+      <tr>
+        <td>{{ patient.patient_code }}</td>
+        <td>{{ patient.full_name }}</td>
+        <td>{{ patient.phone }}</td>
+        <td>{{ patient.blood_group }}</td>
+        <td>
+          {% if risk %}
+          <span class="level-tag {{ risk.level }}">{{ risk.level|title }}</span>
+          <small>Score {{ risk.score }}</small>
+          {% else %}
+          <small>Pending</small>
+          {% endif %}
+        </td>
+        <td>{{ patient.created_at }}</td>
+        <td><a href="{{ url_for('patient_detail', patient_id=patient.id) }}">Open</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No patients found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

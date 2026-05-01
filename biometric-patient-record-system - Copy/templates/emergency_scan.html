@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading emergency-heading">
+  <div>
+    <span class="eyebrow">Critical Care Lookup</span>
+    <h1>Emergency Patient Scan</h1>
+  </div>
+  <a class="button secondary" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</div>
+
+<section class="emergency-hero panel">
+  <div>
+    <h2>Immediate Biometric Triage</h2>
+    <p>Face or fingerprint scan se patient ki allergy, blood group, emergency contact, latest vitals aur treatment risk instantly open hota hai.</p>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="emergency-scan-form">
+    <label>Face Scan
+      <input type="file" name="face_image" accept="image/*" capture="user">
+    </label>
+    <label>Fingerprint Scan
+      <input type="file" name="fingerprint_image" accept="image/*">
+    </label>
+    <button type="submit" class="danger-button">Scan for Emergency</button>
+  </form>
+</section>
+
+{% if emergency_case %}
+{% set patient = emergency_case.patient %}
+{% set metric = emergency_case.latest_metric %}
+{% set record = emergency_case.latest_record %}
+{% set risk = emergency_case.latest_risk %}
+
+<section class="panel emergency-actions no-print">
+  <div>
+    <h2>ICU Handover Tools</h2>
+    <p class="muted-line">Emergency summary print karke ICU team ko allergy, blood group, vitals aur latest diagnosis handover kar sakte hain.</p>
+  </div>
+  <button type="button" class="danger-button" onclick="window.print()">Print ICU Handover</button>
+</section>
+
+<section class="emergency-grid">
+  <article class="panel emergency-patient-card">
+    <div class="patient-profile-card">
+      {% if patient.profile_photo_path %}
+      <img class="patient-photo" src="{{ url_for('patient_photo', patient_id=patient.id) }}" alt="{{ patient.full_name }} photo">
+      {% else %}
+      <div class="patient-photo placeholder">{{ patient.full_name[:1]|upper }}</div>
+      {% endif %}
+      <div>
+        <strong>{{ patient.full_name }}</strong>
+        <small>{{ patient.patient_code }}</small>
+      </div>
+    </div>
+    <div class="emergency-score">
+      <span>Match Score</span>
+      <strong>{{ match.combined_score if match else "Loaded" }}</strong>
+    </div>
+    <a class="button secondary" href="{{ url_for('patient_detail', patient_id=patient.id) }}">Open Full Profile</a>
+  </article>
+
+  <article class="panel emergency-critical">
+    <h2>Critical Treatment Info</h2>
+    <dl>
+      <dt>Allergies</dt><dd class="critical-text">{{ patient.allergies or "No allergy recorded" }}</dd>
+      <dt>Blood Group</dt><dd>{{ patient.blood_group or "-" }}</dd>
+      <dt>Emergency Contact</dt><dd>{{ patient.emergency_contact or "-" }}</dd>
+      <dt>Phone</dt><dd>{{ patient.phone or "-" }}</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel triage-checklist">
+  <h2>Emergency Triage Checklist</h2>
+  <div class="checklist-grid">
+    <label><input type="checkbox"> Airway checked</label>
+    <label><input type="checkbox"> Breathing checked</label>
+    <label><input type="checkbox"> Circulation checked</label>
+    <label><input type="checkbox"> Allergy verified</label>
+    <label><input type="checkbox"> Family informed</label>
+    <label><input type="checkbox"> ICU team notified</label>
+  </div>
+</section>
+
+<section class="panel family-alert-panel">
+  <div>
+    <h2>Send Family Emergency Alert</h2>
+    <p class="muted-line">Emergency contact ko patient status aur hospital contact request ka alert message send karein.</p>
+  </div>
+  <form method="post" action="{{ url_for('send_family_alert', patient_id=patient.id) }}" class="family-alert-form">
+    <label>Family Contact Number
+      <input name="recipient_phone" value="{{ emergency_case.family_alert_phone }}" placeholder="9876543210" required>
+    </label>
+    <label class="wide">Alert Message
+      <textarea name="message" required>{{ emergency_case.family_alert_message }}</textarea>
+    </label>
+    <div class="form-actions wide">
+      <button type="submit" class="danger-button">Send Alert Message</button>
+    </div>
+  </form>
+  {% if emergency_case.notifications %}
+  <div class="notification-history">
+    <h2>Recent Family Alerts</h2>
+    <table>
+      <thead><tr><th>Time</th><th>Number</th><th>Status</th><th>Sent By</th></tr></thead>
+      <tbody>
+        {% for note in emergency_case.notifications %}
+        <tr>
+          <td>{{ note.created_at }}</td>
+          <td>{{ note.recipient_phone }}</td>
+          <td>{{ note.status }}</td>
+          <td>{{ note.sent_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="dual-grid">
+  <article class="panel">
+    <h2>Latest Vitals</h2>
+    {% if metric %}
+    <div class="vital-grid">
+      <div><span>BP</span><strong>{{ metric.systolic_bp or "-" }}/{{ metric.diastolic_bp or "-" }}</strong></div>
+      <div><span>HR</span><strong>{{ metric.heart_rate or "-" }}</strong></div>
+      <div><span>SpO2</span><strong>{{ metric.spo2 or "-" }}</strong></div>
+      <div><span>Glucose</span><strong>{{ metric.glucose or "-" }}</strong></div>
+      <div><span>Temp</span><strong>{{ metric.temperature or "-" }}</strong></div>
+      <div><span>Resp</span><strong>{{ metric.respiratory_rate or "-" }}</strong></div>
+    </div>
+    <small class="muted-line">Recorded: {{ metric.created_at }}</small>
+    {% else %}
+    <p>No vitals recorded.</p>
+    {% endif %}
+  </article>
+
+  <article class="panel">
+    <h2>AI Risk Snapshot</h2>
+    {% if risk %}
+    <p><span class="level-tag {{ risk.risk_level }}">{{ risk.risk_level|title }}</span> Score {{ risk.risk_score }}</p>
+    <p>{{ risk.predicted_diseases }}</p>
+    <p class="muted-line">{{ risk.recommendation }}</p>
+    {% else %}
+    <p>No risk assessment recorded.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="dual-grid">
+  <article class="panel">
+    <h2>Latest Diagnosis</h2>
+    {% if record %}
+    <dl>
+      <dt>Diagnosis</dt><dd>{{ record.diagnosis }}</dd>
+      <dt>Prescription</dt><dd>{{ record.prescription or "-" }}</dd>
+      <dt>Doctor Notes</dt><dd>{{ record.doctor_notes or "-" }}</dd>
+      <dt>Time</dt><dd>{{ record.created_at }}</dd>
+    </dl>
+    {% else %}
+    <p>No clinical record available.</p>
+    {% endif %}
+  </article>
+
+  <article class="panel">
+    <h2>Open Alerts</h2>
+    <div class="alert-stack">
+      {% for alert in emergency_case.open_alerts %}
+      <div class="emergency-alert {{ alert.severity }}">
+        <strong>{{ alert.title }}</strong>
+        <small>{{ alert.details }}</small>
+      </div>
+      {% else %}
+      <p>No open priority alerts.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endif %}
+
+{% if candidates %}
+<section class="panel nearest-match">
+  <h2>Nearest Emergency Match Scores</h2>
+  <table>
+    <thead><tr><th>Patient</th><th>Face</th><th>Fingerprint</th><th>Combined</th></tr></thead>
+    <tbody>
+      {% for item in candidates %}
+      <tr>
+        <td>{{ item.full_name }} <small>{{ item.patient_code }}</small></td>
+        <td>{{ item.face_score or "-" }}</td>
+        <td>{{ item.fingerprint_score or "-" }}</td>
+        <td>{{ item.combined_score }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

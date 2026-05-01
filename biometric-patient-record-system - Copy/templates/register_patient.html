@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Enrollment</span>
+    <h1>Register Patient + AI Baseline</h1>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="panel form-grid">
+  <label>Full Name
+    <input name="full_name" required>
+  </label>
+  <label>Patient Photo
+    <input type="file" name="patient_photo" accept="image/*">
+  </label>
+  <label>Gender
+    <select name="gender">
+      <option value="">Select</option>
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </label>
+  <label>Date of Birth
+    <input type="date" name="date_of_birth">
+  </label>
+  <label>Phone
+    <input name="phone">
+  </label>
+  <label>Blood Group
+    <input name="blood_group" placeholder="B+">
+  </label>
+  <label>Emergency Contact
+    <input name="emergency_contact">
+  </label>
+  <label class="wide">Address
+    <textarea name="address"></textarea>
+  </label>
+  <label class="wide">Allergies / Clinical Notes
+    <textarea name="allergies"></textarea>
+  </label>
+
+  <label>Face Image
+    <input type="file" name="face_image" accept="image/*">
+  </label>
+  <label>Fingerprint Image
+    <input type="file" name="fingerprint_image" accept="image/*">
+  </label>
+
+  <label>Systolic BP
+    <input type="number" name="systolic_bp" placeholder="120">
+  </label>
+  <label>Diastolic BP
+    <input type="number" name="diastolic_bp" placeholder="80">
+  </label>
+  <label>Heart Rate
+    <input type="number" name="heart_rate" placeholder="76">
+  </label>
+  <label>SpO2
+    <input type="number" step="0.1" name="spo2" placeholder="98">
+  </label>
+  <label>Glucose
+    <input type="number" step="0.1" name="glucose" placeholder="102">
+  </label>
+  <label>Temperature (F)
+    <input type="number" step="0.1" name="temperature" placeholder="98.6">
+  </label>
+  <label>Respiratory Rate
+    <input type="number" name="respiratory_rate" placeholder="18">
+  </label>
+  <label class="wide">Metric Notes
+    <textarea name="metric_notes"></textarea>
+  </label>
+
+  <div class="form-actions wide">
+    <button type="submit">Register Patient</button>
+  </div>
+</form>
+{% endblock %}

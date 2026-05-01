@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Retrieval</span>
+    <h1>Face/Fingerprint Biometric Retrieval</h1>
+  </div>
+  {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+  <a class="button secondary" href="{{ url_for('register_patient') }}">New Registration</a>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="panel form-grid compact">
+  <label>Face Image
+    <input type="file" name="face_image" accept="image/*" capture="user">
+  </label>
+  <label>Fingerprint Image
+    <input type="file" name="fingerprint_image" accept="image/*">
+  </label>
+  <div class="form-actions wide">
+    <button type="submit">Find Patient Record</button>
+  </div>
+</form>
+
+{% if candidates %}
+<section class="panel">
+  <h2>Nearest Match Scores</h2>
+  <table>
+    <thead><tr><th>Patient</th><th>Face</th><th>Fingerprint</th><th>Combined</th></tr></thead>
+    <tbody>
+      {% for item in candidates %}
+      <tr>
+        <td>{{ item.full_name }} <small>{{ item.patient_code }}</small></td>
+        <td>{{ item.face_score or "-" }}</td>
+        <td>{{ item.fingerprint_score or "-" }}</td>
+        <td>{{ item.combined_score }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

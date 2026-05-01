@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="login-panel">
+  <div class="login-copy">
+    <span class="eyebrow">MCA Final Year Project</span>
+    <h1>AegisCare: Advanced Biometric Patient Record Retrieval System with AI Risk Prediction</h1>
+    <p>Predict patient risk, retrieve records through face and fingerprint matching, and secure clinical data with tamper-evident chain hashing.</p>
+  </div>
+  <form method="post" class="card form-card">
+    <h2>Login</h2>
+    <label>Username
+      <input name="username" placeholder="admin" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" placeholder="admin123" required>
+    </label>
+    <button type="submit">Sign in</button>
+    <div class="demo-users">
+      <strong>Demo:</strong> admin/admin123, doctor/doctor123, reception/reception123
+    </div>
+  </form>
+</section>
+{% endblock %}

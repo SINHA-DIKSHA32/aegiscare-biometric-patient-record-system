@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">{{ patient.patient_code }}</span>
+    <h1>{{ patient.full_name }}</h1>
+  </div>
+  <a class="button secondary" href="{{ url_for('patients') if current_user.role in ['admin', 'doctor', 'receptionist'] else url_for('dashboard') }}">Back</a>
+</div>
+
+<section class="details-grid">
+  <article class="panel">
+    <h2>Patient Details</h2>
+    <div class="patient-profile-card">
+      {% if patient.profile_photo_path %}
+      <img class="patient-photo" src="{{ url_for('patient_photo', patient_id=patient.id) }}" alt="{{ patient.full_name }} photo">
+      {% else %}
+      <div class="patient-photo placeholder">{{ patient.full_name[:1]|upper }}</div>
+      {% endif %}
+      <div>
+        <strong>{{ patient.full_name }}</strong>
+        <small>{{ patient.patient_code }}</small>
+      </div>
+    </div>
+    <dl>
+      <dt>Gender</dt><dd>{{ patient.gender or "-" }}</dd>
+      <dt>DOB</dt><dd>{{ patient.date_of_birth or "-" }}</dd>
+      <dt>Phone</dt><dd>{{ patient.phone or "-" }}</dd>
+      <dt>Blood Group</dt><dd>{{ patient.blood_group or "-" }}</dd>
+      <dt>Emergency</dt><dd>{{ patient.emergency_contact or "-" }}</dd>
+      <dt>Address</dt><dd>{{ patient.address or "-" }}</dd>
+      <dt>Allergies</dt><dd>{{ patient.allergies or "-" }}</dd>
+    </dl>
+  </article>
+  <article class="panel">
+    <h2>Biometrics</h2>
+    <div class="pill-row">
+      {% for item in biometrics %}
+      <span class="pill">{{ item.biometric_type|title }} enrolled</span>
+      {% else %}
+      <span class="pill warning">No biometric enrolled</span>
+      {% endfor %}
+    </div>
+    {% if latest_risk %}
+    <hr>
+    <h2>Latest AI Risk</h2>
+    <p><span class="level-tag {{ latest_risk.risk_level }}">{{ latest_risk.risk_level|title }}</span> Score {{ latest_risk.risk_score }}</p>
+    <p>{{ latest_risk.predicted_diseases }}</p>
+    <p class="muted-line">{{ latest_risk.recommendation }}</p>
+    {% endif %}
+  </article>
+</section>
+
+{% if open_alerts %}
+<section class="panel">
+  <h2>Open Priority Alerts</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Severity</th><th>Alert</th><th></th></tr></thead>
+    <tbody>
+      {% for alert in open_alerts %}
+      <tr>
+        <td>{{ alert.created_at }}</td>
+        <td><span class="level-tag {{ alert.severity }}">{{ alert.severity|title }}</span></td>
+        <td>{{ alert.title }} <small>{{ alert.details }}</small></td>
+        <td>
+          {% if current_user.role in ["admin", "doctor"] %}
+          <form method="post" action="{{ url_for('resolve_alert', alert_id=alert.id) }}">
+            <button type="submit" class="button secondary">Resolve</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if current_user.role in ["admin", "doctor", "receptionist"] %}
+<section class="panel">
+  <h2>Add Health Metrics</h2>
+  <form method="post" action="{{ url_for('add_metrics', patient_id=patient.id) }}" class="form-grid">
+    <label>Systolic BP
+      <input type="number" name="systolic_bp" placeholder="120">
+    </label>
+    <label>Diastolic BP
+      <input type="number" name="diastolic_bp" placeholder="80">
+    </label>
+    <label>Heart Rate
+      <input type="number" name="heart_rate" placeholder="76">
+    </label>
+    <label>SpO2
+      <input type="number" step="0.1" name="spo2" placeholder="98">
+    </label>
+    <label>Glucose
+      <input type="number" step="0.1" name="glucose" placeholder="100">
+    </label>
+    <label>Temperature (F)
+      <input type="number" step="0.1" name="temperature" placeholder="98.6">
+    </label>
+    <label>Respiratory Rate
+      <input type="number" name="respiratory_rate" placeholder="18">
+    </label>
+    <label class="wide">Notes
+      <textarea name="notes"></textarea>
+    </label>
+    <div class="form-actions wide">
+      <button type="submit">Save Metrics + Recalculate Risk</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+{% if current_user.role in ["admin", "doctor"] %}
+<section class="panel">
+  <h2>Add Medical Record</h2>
+  <form method="post" action="{{ url_for('add_record', patient_id=patient.id) }}" class="form-grid">
+    <label>Diagnosis
+      <input name="diagnosis" required>
+    </label>
+    <label>Prescription
+      <input name="prescription">
+    </label>
+    <label class="wide">Doctor Notes
+      <textarea name="doctor_notes"></textarea>
+    </label>
+    <div class="form-actions wide">
+      <button type="submit">Save Record + Recalculate Risk</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="dual-grid">
+  <article class="panel">
+    <h2>Vitals Trend</h2>
+    <canvas id="vitalsTrendChart" height="190"></canvas>
+  </article>
+  <article class="panel">
+    <h2>Risk Score Trend</h2>
+    <canvas id="riskHistoryChart" height="190"></canvas>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Recent Health Metrics</h2>
+  <table>
+    <thead><tr><th>Time</th><th>BP</th><th>HR</th><th>SpO2</th><th>Glucose</th><th>Temp</th><th>Resp</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for metric in metrics %}
+      <tr>
+        <td>{{ metric.created_at }}</td>
+        <td>{{ metric.systolic_bp or "-" }}/{{ metric.diastolic_bp or "-" }}</td>
+        <td>{{ metric.heart_rate or "-" }}</td>
+        <td>{{ metric.spo2 or "-" }}</td>
+        <td>{{ metric.glucose or "-" }}</td>
+        <td>{{ metric.temperature or "-" }}</td>
+        <td>{{ metric.respiratory_rate or "-" }}</td>
+        <td>{{ metric.notes or "-" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">No vitals captured yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>AI Risk History</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Score</th><th>Level</th><th>Predicted Diseases</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      {% for risk in risk_history %}
+      <tr>
+        <td>{{ risk.created_at }}</td>
+        <td>{{ risk.risk_score }}</td>
+        <td><span class="level-tag {{ risk.risk_level }}">{{ risk.risk_level|title }}</span></td>
+        <td>{{ risk.predicted_diseases }}</td>
+        <td>{{ risk.recommendation }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No risk history yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Medical History</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Diagnosis</th><th>Prescription</th><th>Doctor</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>{{ record.created_at }}</td>
+        <td>{{ record.diagnosis }}</td>
+        <td>{{ record.prescription }}</td>
+        <td>{{ record.created_by }}</td>
+        <td>{{ record.doctor_notes }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No medical records yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  (() => {
+    const data = {{ chart_data | tojson }};
+
+    function drawChart(canvasId, labels, series, maxValue) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !labels.length) return;
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width = canvas.clientWidth * window.devicePixelRatio;
+      const height = canvas.height = 190 * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const w = canvas.clientWidth;
+      const h = 190;
+      const pad = { left: 35, right: 12, top: 12, bottom: 30 };
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = "#d5d9e0";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + ((h - pad.top - pad.bottom) * i / 4);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(w - pad.right, y);
+        ctx.stroke();
+      }
+
+      const xStep = (w - pad.left - pad.right) / Math.max(1, labels.length - 1);
+      series.forEach(item => {
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        labels.forEach((_, index) => {
+          const value = item.values[index];
+          if (value === null || value === undefined) return;
+          const x = pad.left + (index * xStep);
+          const y = pad.top + ((h - pad.top - pad.bottom) * (1 - (Number(value) / maxValue)));
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      });
+
+      ctx.fillStyle = "#1f2933";
+      ctx.font = "11px Arial";
+      ctx.textAlign = "center";
+      labels.forEach((label, index) => {
+        if (labels.length > 8 && index % 2 === 1) return;
+        const x = pad.left + (index * xStep);
+        ctx.fillText(String(label), x, h - 8);
+      });
+    }
+
+    drawChart("vitalsTrendChart", data.labels || [], [
+      { color: "#0f766e", values: data.systolic || [] },
+      { color: "#b45309", values: data.glucose || [] },
+      { color: "#2563eb", values: data.spo2 || [] }
+    ], 220);
+
+    drawChart("riskHistoryChart", data.risk_labels || [], [
+      { color: "#b42318", values: data.risk_values || [] }
+    ], 100);
+  })();
+</script>
+{% endblock %}

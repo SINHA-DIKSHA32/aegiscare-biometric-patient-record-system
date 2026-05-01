@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "AegisCare: Advanced Biometric Patient Record Retrieval System with AI Risk Prediction" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    {% if current_user %}
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">B</span>
+        <div>
+          <strong>AegisCare</strong>
+          <small>AI Risk + Biometric Retrieval</small>
+        </div>
+      </div>
+      <nav>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+        <a href="{{ url_for('emergency_scan') }}">Emergency Scan</a>
+        {% endif %}
+        <a href="{{ url_for('identify') }}">Biometric Retrieval</a>
+        {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+        <a href="{{ url_for('patients') }}">Patients</a>
+        {% endif %}
+        {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+        <a href="{{ url_for('register_patient') }}">Register Patient</a>
+        {% endif %}
+        <a href="{{ url_for('about') }}">Project Info</a>
+        {% if current_user.role in ["admin", "doctor"] %}
+        <a href="{{ url_for('integrity') }}">Integrity Chain</a>
+        {% endif %}
+        {% if current_user.role == "admin" %}
+        <a href="{{ url_for('audit') }}">Audit Log</a>
+        {% endif %}
+      </nav>
+      <div class="user-card">
+        <span>{{ current_user.full_name }}</span>
+        <small>{{ current_user.role|title }}</small>
+        <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </aside>
+    {% endif %}
+
+    <main class="content {% if not current_user %}content-centered{% endif %}">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="messages">
+            {% for category, message in messages %}
+              <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Project Architecture</span>
+    <h1>AegisCare Project Stack</h1>
+  </div>
+</div>
+<section class="panel prose">
+  <p>
+    This MCA-level system combines clinical record management with predictive analytics, face/fingerprint biometric authentication, and tamper-evident blockchain-style integrity.
+    Along with regular storage, the platform estimates patient risk level using health vitals and medical history signals.
+  </p>
+  <p>
+    The AI layer generates disease-risk probabilities (hypertension, diabetes, cardio, respiratory), then creates priority alerts for doctors.
+    The dashboard presents risk distribution, trend charts, and high-priority patient queue for faster intervention.
+  </p>
+  <p>
+    Security is implemented through encrypted biometric templates and an integrity chain where each event block stores a hash linked to the previous block.
+    Any data tampering attempt changes hash continuity and becomes visible in the integrity verification screen.
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Clinical Command Center</span>
+    <h1>Smart Doctor Dashboard</h1>
+  </div>
+  <div class="action-row">
+    {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+    <a class="button danger-button" href="{{ url_for('emergency_scan') }}">Emergency Scan</a>
+    {% endif %}
+  <a class="button" href="{{ url_for('identify') }}">Start Biometric Retrieval</a>
+  </div>
+</div>
+
+<section class="stat-grid">
+  <article class="stat-card"><span>{{ stats.patients }}</span><small>Total Patients</small></article>
+  <article class="stat-card"><span>{{ stats.records }}</span><small>Clinical Records</small></article>
+  <article class="stat-card"><span>{{ stats.biometrics }}</span><small>Biometric Templates</small></article>
+  <article class="stat-card"><span>{{ stats.alerts_open }}</span><small>Open Risk Alerts</small></article>
+</section>
+
+<section class="panel">
+  <h2>AI Risk Distribution</h2>
+  <div class="risk-strip">
+    <div class="risk-pill low">Low {{ risk_distribution.low }}</div>
+    <div class="risk-pill moderate">Moderate {{ risk_distribution.moderate }}</div>
+    <div class="risk-pill high">High {{ risk_distribution.high }}</div>
+    <div class="risk-pill critical">Critical {{ risk_distribution.critical }}</div>
+  </div>
+</section>
+
+<section class="dual-grid">
+  <article class="panel">
+    <h2>Avg Risk Trend (Last 14 Days)</h2>
+    <canvas id="riskTrendChart" height="180"></canvas>
+    <small class="muted-line">AI model tracks disease-risk movement for intervention planning.</small>
+  </article>
+  <article class="panel">
+    <h2>Blockchain Integrity</h2>
+    <div class="integrity-box {{ 'ok' if chain_status.ok else 'bad' }}">
+      <strong>Status: {{ 'Healthy' if chain_status.ok else 'Tamper Warning' }}</strong>
+      <p>Checked Blocks: {{ chain_status.checked_blocks }}</p>
+      {% if chain_status.issues %}
+      <ul class="simple-list">
+        {% for issue in chain_status.issues %}
+        <li>{{ issue }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No integrity mismatch detected.</p>
+      {% endif %}
+      <a class="button secondary" href="{{ url_for('integrity') }}">View Full Chain</a>
+    </div>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Priority Patients</h2>
+  <table>
+    <thead><tr><th>Patient</th><th>Risk Score</th><th>Risk Level</th><th>Predicted Profile</th><th></th></tr></thead>
+    <tbody>
+      {% for item in priority_patients %}
+      <tr>
+        <td>{{ item.full_name }} <small>{{ item.patient_code }}</small></td>
+        <td>{{ item.risk_score }}</td>
+        <td><span class="level-tag {{ item.risk_level }}">{{ item.risk_level|title }}</span></td>
+        <td>{{ item.predicted_diseases }}</td>
+        <td><a href="{{ url_for('patient_detail', patient_id=item.patient_id) }}">Open</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No risk assessments generated yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Open Priority Alerts</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Patient</th><th>Severity</th><th>Alert</th><th></th></tr></thead>
+    <tbody>
+      {% for alert in open_alerts %}
+      <tr>
+        <td>{{ alert.created_at }}</td>
+        <td>{{ alert.full_name }} <small>{{ alert.patient_code }}</small></td>
+        <td><span class="level-tag {{ alert.severity }}">{{ alert.severity|title }}</span></td>
+        <td>{{ alert.title }} <small>{{ alert.details }}</small></td>
+        <td><a href="{{ url_for('patient_detail', patient_id=alert.patient_id) }}">Review</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No open alerts.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Recent Activity</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Details</th></tr></thead>
+    <tbody>
+      {% for log in recent_logs %}
+      <tr>
+        <td>{{ log.created_at }}</td>
+        <td>{{ log.actor }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.details }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No activity yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  (() => {
+    const labels = {{ risk_trend["labels"] | tojson }};
+    const values = {{ risk_trend["values"] | tojson }};
+    const canvas = document.getElementById("riskTrendChart");
+    if (!canvas || !labels.length || !values.length) return;
+
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width = canvas.clientWidth * window.devicePixelRatio;
+    const height = canvas.height = 180 * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const w = canvas.clientWidth;
+    const h = 180;
+    const padding = { left: 34, right: 12, top: 10, bottom: 28 };
+    const maxValue = 100;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "#d5d9e0";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding.top + ((h - padding.top - padding.bottom) * i / 5);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(w - padding.right, y);
+      ctx.stroke();
+    }
+
+    const xStep = (w - padding.left - padding.right) / Math.max(1, values.length - 1);
+    ctx.strokeStyle = "#0f766e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    values.forEach((value, index) => {
+      const x = padding.left + (index * xStep);
+      const y = padding.top + ((h - padding.top - padding.bottom) * (1 - (Number(value || 0) / maxValue)));
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = "#1f2933";
+    ctx.font = "11px Arial";
+    ctx.textAlign = "center";
+    labels.forEach((label, index) => {
+      if (labels.length > 7 && index % 2 === 1) return;
+      const x = padding.left + (index * xStep);
+      ctx.fillText(String(label).slice(5), x, h - 8);
+    });
+  })();
+</script>
+{% endblock %}
