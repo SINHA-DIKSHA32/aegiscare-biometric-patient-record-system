@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">{{ patient.patient_code }}</span>
+    <h1>{{ patient.full_name }}</h1>
+  </div>
+  <div class="action-row">
+    <a class="button secondary" href="{{ url_for('fhir_export', patient_id=patient.id) }}">FHIR JSON</a>
+    {% if current_user.role in ["admin", "doctor", "receptionist"] %}
+    <a class="button secondary" href="{{ url_for('patients') }}">Back to Patients</a>
+    {% endif %}
+  </div>
+</div>
+
+<section class="details-grid">
+  <article class="panel">
+    <h2>Patient Details</h2>
+    <dl>
+      <dt>Gender</dt><dd>{{ patient.gender or "-" }}</dd>
+      <dt>DOB</dt><dd>{{ patient.date_of_birth or "-" }}</dd>
+      <dt>Phone</dt><dd>{{ patient.phone or "-" }}</dd>
+      <dt>Blood Group</dt><dd>{{ patient.blood_group or "-" }}</dd>
+      <dt>Height</dt><dd>{{ patient.height_cm or "-" }}{% if patient.height_cm %} cm{% endif %}</dd>
+      <dt>Weight</dt><dd>{{ patient.weight_kg or "-" }}{% if patient.weight_kg %} kg{% endif %}</dd>
+      <dt>Chronic</dt><dd>{{ patient.chronic_conditions or "-" }}</dd>
+      <dt>Insurance</dt><dd>{{ patient.insurance_id or "-" }}</dd>
+      <dt>Emergency</dt><dd>{{ patient.emergency_contact or "-" }}</dd>
+      <dt>Address</dt><dd>{{ patient.address or "-" }}</dd>
+      <dt>Allergies</dt><dd>{{ patient.allergies or "-" }}</dd>
+    </dl>
+  </article>
+  <article class="panel">
+    <h2>Biometric Trust</h2>
+    <div class="pill-row">
+      {% for item in biometrics %}
+      <span class="pill">{{ item.biometric_type|title }} enrolled</span>
+      {% else %}
+      <span class="pill warning">No biometric enrolled</span>
+      {% endfor %}
+    </div>
+    <p class="hint">Record access is protected by role login and verified biometric session access.</p>
+  </article>
+</section>
+
+<section class="panel ai-panel">
+  <div class="panel-heading">
+    <div>
+      <span class="eyebrow">AI Generated Patient Risk</span>
+      <h2>Predictive Health Summary</h2>
+    </div>
+    {% if latest_vital %}
+    <span class="risk {{ latest_vital.ai_risk_level|lower }}">{{ latest_vital.ai_risk_level }} Risk</span>
+    {% endif %}
+  </div>
+  {% if latest_vital %}
+  <div class="risk-layout">
+    <div class="score-ring">
+      <strong>{{ latest_vital.ai_risk_score }}</strong>
+      <small>/100</small>
+    </div>
+    <div>
+      <p>{{ latest_vital.ai_summary }}</p>
+      <div class="prediction-grid">
+        {% for item in predictions %}
+        <div class="prediction">
+          <strong>{{ item.condition }}</strong>
+          <span>{{ item.confidence }}%</span>
+          <small>{{ item.reason }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="recommendation-grid">
+    <div>
+      <h3>Findings</h3>
+      {% for item in findings %}
+      <p>{{ item }}</p>
+      {% endfor %}
+    </div>
+    <div>
+      <h3>Recommended Action</h3>
+      {% for item in recommendations %}
+      <p>{{ item }}</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="hint">No AI risk has been generated yet. Add vitals below to generate a disease-risk prediction.</p>
+  {% endif %}
+</section>
+
+{% if current_user.role in ["admin", "doctor"] %}
+<section class="panel">
+  <h2>Add Vitals and Generate AI Risk</h2>
+  <form method="post" action="{{ url_for('add_vitals', patient_id=patient.id) }}" class="form-grid">
+    <label>Systolic BP
+      <input type="number" step="1" name="systolic_bp" placeholder="120">
+    </label>
+    <label>Diastolic BP
+      <input type="number" step="1" name="diastolic_bp" placeholder="80">
+    </label>
+    <label>Pulse Rate
+      <input type="number" step="1" name="pulse_rate" placeholder="78">
+    </label>
+    <label>Temperature (C)
+      <input type="number" step="0.1" name="temperature_c" placeholder="37.0">
+    </label>
+    <label>SpO2 (%)
+      <input type="number" step="1" name="spo2" placeholder="98">
+    </label>
+    <label>Fasting Glucose
+      <input type="number" step="1" name="fasting_glucose" placeholder="95">
+    </label>
+    <label>Random Glucose
+      <input type="number" step="1" name="random_glucose" placeholder="140">
+    </label>
+    <label>BMI
+      <input type="number" step="0.1" name="bmi" placeholder="Auto if height/weight exists">
+    </label>
+    <label class="wide">Symptoms
+      <textarea name="symptoms" placeholder="fever, chest pain, breathlessness, dizziness..."></textarea>
+    </label>
+    <div class="form-actions wide">
+      <button type="submit">Generate AI Risk</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Add Medical Record</h2>
+  <form method="post" action="{{ url_for('add_record', patient_id=patient.id) }}" class="form-grid">
+    <label>Diagnosis
+      <input name="diagnosis" required>
+    </label>
+    <label>Prescription
+      <input name="prescription">
+    </label>
+    <label class="wide">Doctor Notes
+      <textarea name="doctor_notes"></textarea>
+    </label>
+    <div class="form-actions wide">
+      <button type="submit">Save Record</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Vitals and AI History</h2>
+  <table>
+    <thead><tr><th>Date</th><th>BP</th><th>Pulse</th><th>Sugar</th><th>Risk</th><th>Summary</th></tr></thead>
+    <tbody>
+      {% for vital in vitals %}
+      <tr>
+        <td>{{ vital.created_at }}</td>
+        <td>{{ vital.systolic_bp or "-" }}/{{ vital.diastolic_bp or "-" }}</td>
+        <td>{{ vital.pulse_rate or "-" }}</td>
+        <td>{{ vital.fasting_glucose or vital.random_glucose or "-" }}</td>
+        <td><span class="risk {{ vital.ai_risk_level|lower }}">{{ vital.ai_risk_level }}</span></td>
+        <td>{{ vital.ai_summary }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No vitals recorded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Medical History</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Diagnosis</th><th>Prescription</th><th>Doctor</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>{{ record.created_at }}</td>
+        <td>{{ record.diagnosis }}</td>
+        <td>{{ record.prescription }}</td>
+        <td>{{ record.created_by }}</td>
+        <td>{{ record.doctor_notes }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No medical records yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

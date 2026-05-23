@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Project Explanation</span>
+    <h1>How AegisCare Works</h1>
+  </div>
+</div>
+<section class="panel prose">
+  <p>
+    AegisCare is an MCA-level healthcare identity platform that retrieves patient records only after role login and
+    biometric verification. It combines face and fingerprint matching, encrypted biometric storage, patient medical
+    records, AI-generated health risk screening, and a tamper-evident audit ledger.
+  </p>
+  <p>
+    During registration, patient demographics, clinical profile, face image, and fingerprint image are stored. During
+    retrieval, OpenCV processes uploaded biometrics and compares them with encrypted enrolled samples. In multimodal
+    mode, both face and fingerprint must satisfy the matching thresholds before the record opens.
+  </p>
+  <p>
+    The AI layer predicts risk from vitals such as BP, glucose, pulse, temperature, SpO2, BMI, symptoms, and latest
+    diagnosis. The blockchain layer hashes major events into a linked ledger, so the examiner can see how audit records
+    become tamper-evident. The FHIR-style JSON export demonstrates interoperability with external healthcare systems.
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Enrollment</span>
+    <h1>Register Patient</h1>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="panel form-grid">
+  <label>Full Name
+    <input name="full_name" required>
+  </label>
+  <label>Gender
+    <select name="gender">
+      <option value="">Select</option>
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </label>
+  <label>Date of Birth
+    <input type="date" name="date_of_birth">
+  </label>
+  <label>Phone
+    <input name="phone">
+  </label>
+  <label>Blood Group
+    <input name="blood_group" placeholder="B+">
+  </label>
+  <label>Emergency Contact
+    <input name="emergency_contact">
+  </label>
+  <label>Height (cm)
+    <input type="number" step="0.1" name="height_cm" placeholder="172">
+  </label>
+  <label>Weight (kg)
+    <input type="number" step="0.1" name="weight_kg" placeholder="68">
+  </label>
+  <label>Insurance / ABHA ID
+    <input name="insurance_id" placeholder="Optional interoperability ID">
+  </label>
+  <label>Chronic Conditions
+    <input name="chronic_conditions" placeholder="Diabetes, Hypertension...">
+  </label>
+  <label class="wide">Address
+    <textarea name="address"></textarea>
+  </label>
+  <label class="wide">Allergies / Notes
+    <textarea name="allergies"></textarea>
+  </label>
+  <label>Face Image
+    <input type="file" name="face_image" accept="image/*">
+  </label>
+  <label>Fingerprint Image
+    <input type="file" name="fingerprint_image" accept="image/*">
+  </label>
+  <div class="form-actions wide">
+    <button type="submit">Register Patient</button>
+  </div>
+</form>
+{% endblock %}

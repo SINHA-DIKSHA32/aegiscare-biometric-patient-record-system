@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Tamper-Evident Security</span>
+    <h1>Blockchain Ledger</h1>
+  </div>
+  <span class="status-badge {{ 'ok' if status.valid else 'critical' }}">
+    {{ "Chain Verified" if status.valid else "Integrity Broken" }}
+  </span>
+</div>
+
+<section class="stat-grid">
+  <article class="stat-card"><span>{{ status.total_blocks }}</span><small>Total Blocks</small></article>
+  <article class="stat-card"><span>{{ "OK" if status.valid else "FAIL" }}</span><small>Integrity Status</small></article>
+  <article class="stat-card wide-stat"><span>{{ status.last_hash[:12] if status.last_hash else "-" }}</span><small>Latest Hash Prefix</small></article>
+</section>
+
+<section class="panel">
+  <h2>Ledger Blocks</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Time</th><th>Actor</th><th>Event</th><th>Previous Hash</th><th>Block Hash</th></tr></thead>
+    <tbody>
+      {% for block in blocks %}
+      <tr>
+        <td>{{ block.id }}</td>
+        <td>{{ block.created_at }}</td>
+        <td>{{ block.actor }}</td>
+        <td>{{ block.event_type }}</td>
+        <td><code>{{ block.previous_hash[:16] }}...</code></td>
+        <td><code>{{ block.block_hash[:16] }}...</code></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No ledger blocks yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

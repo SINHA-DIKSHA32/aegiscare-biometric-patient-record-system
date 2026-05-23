@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments and local dependency folders
+.venv/
+venv/
+env/
+.deps/
+
+# Flask/local runtime
+instance/
+.env
+.env.*
+!.env.example
+server.log
+server.out.log
+server.err.log
+*.log
+
+# Generated documentation/output
+report_output/
+build_*report.py
+major_proposal_title_updated.pdf
+*.tmp
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

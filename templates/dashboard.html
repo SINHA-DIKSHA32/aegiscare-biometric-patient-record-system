@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">AI Healthcare Command Center</span>
+    <h1>Smart Dashboard</h1>
+  </div>
+  <a class="button" href="{{ url_for('identify') }}">Start Multimodal Retrieval</a>
+</div>
+
+<section class="stat-grid smart">
+  <article class="stat-card"><span>{{ stats.patients }}</span><small>Registered Patients</small></article>
+  <article class="stat-card"><span>{{ stats.records }}</span><small>Clinical Records</small></article>
+  <article class="stat-card"><span>{{ stats.vitals }}</span><small>AI Risk Checks</small></article>
+  <article class="stat-card danger-metric"><span>{{ stats.high_risk }}</span><small>High Risk Alerts</small></article>
+  <article class="stat-card"><span>{{ stats.biometrics }}</span><small>Biometric Samples</small></article>
+  <article class="stat-card"><span>{{ chain_status.total_blocks }}</span><small>Ledger Blocks</small></article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Predictive Care</span>
+        <h2>High Risk Patients</h2>
+      </div>
+      <span class="status-badge {{ 'ok' if chain_status.valid else 'critical' }}">
+        Ledger {{ "Verified" if chain_status.valid else "Broken" }}
+      </span>
+    </div>
+    <table>
+      <thead><tr><th>Patient</th><th>Risk</th><th>Score</th><th>AI Summary</th></tr></thead>
+      <tbody>
+        {% for item in high_risk_patients %}
+        <tr>
+          <td><a href="{{ url_for('patient_detail', patient_id=item.id) }}">{{ item.full_name }}</a><small>{{ item.patient_code }}</small></td>
+          <td><span class="risk {{ item.ai_risk_level|lower }}">{{ item.ai_risk_level }}</span></td>
+          <td>{{ item.ai_risk_score }}/100</td>
+          <td>{{ item.ai_summary }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">No high-risk AI alerts yet. Add vitals from a patient profile.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+
+  <article class="panel project-layer">
+    <span class="eyebrow">Advanced Project Layers</span>
+    <h2>MCA Final-Year Stack</h2>
+    <div class="layer-list">
+      <div><strong>AI Layer</strong><small>Disease-risk prediction from BP, sugar, SpO2, pulse, BMI and symptoms.</small></div>
+      <div><strong>Blockchain Layer</strong><small>Tamper-evident hash chain for login, biometric and clinical events.</small></div>
+      <div><strong>Multimodal Biometrics</strong><small>Face + fingerprint verification using OpenCV image processing.</small></div>
+      <div><strong>Interoperability</strong><small>FHIR-like JSON export for external healthcare system integration.</small></div>
+    </div>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Recent Activity</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Details</th></tr></thead>
+    <tbody>
+      {% for log in recent_logs %}
+      <tr>
+        <td>{{ log.created_at }}</td>
+        <td>{{ log.actor }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.details }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No activity yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
